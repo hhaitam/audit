@@ -4,22 +4,21 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 
-# MUST BE FIRST STREAMLIT COMMAND
 st.set_page_config(layout="wide", page_title="Micromania Analytics")
 
-# Load and prepare data
+# Loading and preparing data
 @st.cache_data
 def load_data():
     df = pd.read_csv('micromania_donnees_fictives.csv', sep=';')
     
-    # Calculate additional metrics
+    
     df['CA par employé'] = df['Chiffre d\'Affaires Annuel (€)'] / df['Nombre d\'Employés']
     df['CA par m²'] = df['Chiffre d\'Affaires Annuel (€)'] / df['Surface (m²)']
     df['Taille'] = pd.cut(df['Surface (m²)'], 
                          bins=[0, 200, 350, 500],
                          labels=['Petit (<200m²)', 'Moyen (200-350m²)', 'Grand (>350m²)'])
     
-    # Convert opening date to datetime and extract year
+    # Converting date to datetime and extracting year
     df['Date d\'Ouverture'] = pd.to_datetime(df['Date d\'Ouverture'])
     df['Année d\'Ouverture'] = df['Date d\'Ouverture'].dt.year
     
@@ -40,7 +39,7 @@ year_range = st.sidebar.slider("Année d'ouverture",
                               max_value=2025, 
                               value=(2015, 2025))
 
-# Apply filters
+# Applying filters
 filtered_df = df[
     (df['Ville'].isin(selected_cities)) &
     (df['Taille'].isin(selected_sizes)) &
@@ -66,7 +65,7 @@ with tab1:
     # Radar Chart - Maturity Analysis
     st.subheader("Radar de Maturité des Magasins")
     
-    # Calculate maturity scores (example metrics)
+    # Calculate maturity scores
     radar_df = filtered_df.groupby('Taille').agg({
         'CA par employé': 'mean',
         'CA par m²': 'mean',
@@ -75,7 +74,7 @@ with tab1:
         'Surface (m²)': 'mean'
     }).reset_index()
     
-    # Normalize scores for radar chart
+    # Normalizing scores for radar chart
     radar_df_normalized = radar_df.copy()
     for col in ['CA par employé', 'CA par m²', 'Nombre de Transactions', 'Nombre d\'Employés', 'Surface (m²)']:
         radar_df_normalized[col] = (radar_df[col] - radar_df[col].min()) / (radar_df[col].max() - radar_df[col].min()) * 100
